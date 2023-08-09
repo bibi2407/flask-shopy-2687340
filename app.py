@@ -1,5 +1,5 @@
 #Depedendencias de flask
-from flask import Flask
+from flask import Flask, render_template
 
 #Dependencia de modelos
 from flask_sqlalchemy import SQLAlchemy
@@ -9,6 +9,9 @@ from flask_migrate import Migrate
 
 #Dependencia para fecha y hora del sistema
 from datetime import datetime
+#dependencias de wtforms
+from flask_wtf import FlaskForm
+from wtforms import StringField, SubmitField
 
 #Crear el objeto FLASK
 app = Flask(__name__)
@@ -17,12 +20,20 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:@localhost/flask-shopy-2687340'
 app.config['SQLALCHEMY_TRACK_NOTIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'ficha_2687340'
 
 #Crear el objeto de modelos
 db = SQLAlchemy(app)
 
 #Crear el objeto de migracion
 migrate = Migrate(app, db)
+
+#crear formulario de registro de productos
+class ProductosForm(FlaskForm):
+    nombre = StringField(' ingrese nombre producto')
+    precio = StringField('ingrese precio producto')
+    submit = SubmitField('Registrar Producto')
+
 
 #Crear los modelos:
 class Cliente(db.Model):
@@ -37,6 +48,12 @@ class Cliente(db.Model):
     
     email = db.Column(db.String(100), 
                       nullable = True)
+    
+    #Relaciones SQL alchemy
+
+    ventas = db.relationship('Venta' , 
+                             backref = "cliente" , 
+                             lazy = "dynamic") 
     
 class Producto(db.Model):
     #definir los atributos
@@ -55,6 +72,8 @@ class Venta(db.Model):
     #Clave foranea:
     cliente_id = db.Column(db.Integer, 
                            db.ForeignKey('clientes.id'))
+    
+
 
 class Detalle(db.Model):
     __tablename__="detalles"
@@ -64,6 +83,21 @@ class Detalle(db.Model):
     venta_id = db.Column(db.Integer,
                          db.ForeignKey('ventas.id'))
     cantidad= db.Column(db.String(100))
+
+
+    #rutas
+@app.route("/productos", methods =['GET' , 'POST'])
+def nuevo_producto():
+    form = ProductosForm()
+    if form.validate_on_submit():
+        #crear un nuevo producto
+        p = Producto(nombre =form.nombre.data ,
+                    precio=form.precio.data)
+        db.session.add(p)
+        db.session.commit()
+        return "producto registrado" 
+    return render_template('nuevo_producto.html',
+                    form = form)
     
     
 
