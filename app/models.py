@@ -22,7 +22,7 @@ class Cliente(db.Model):
                              lazy = "dynamic") 
     
 class Producto(db.Model):
-    #definir los atributos
+    #definir los atributos  
     __tablename__="productos"
     id = db.Column(db.Integer , primary_key = True )
     nombre = db.Column(db.String(120))
